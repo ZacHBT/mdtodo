@@ -59,10 +59,33 @@ function SetupContent() {
     }
   }, [searchParams, saveConfig, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isValidating, setIsValidating] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    saveConfig(formData);
-    router.push("/");
+    setIsValidating(true);
+    setAuthError(null);
+
+    try {
+      // 現場驗證 Token 有效性
+      const { Octokit } = await import("octokit");
+      const testOctokit = new Octokit({ auth: formData.token });
+      await testOctokit.rest.users.getAuthenticated();
+      
+      // 驗證成功，儲存並轉跳
+      saveConfig(formData);
+      router.push("/");
+    } catch (err: any) {
+      console.error("Token verification failed:", err);
+      if (err.status === 401) {
+        setAuthError("❌ Token 無效 (401 Bad Credentials)。請確認字串是否複製完整，或試著重新產生一個 Token。");
+      } else {
+        setAuthError("❌ 驗證失敗：" + (err.message || "未知錯誤"));
+      }
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   if (isImporting) {
@@ -139,12 +162,24 @@ function SetupContent() {
           />
         </div>
 
+        {authError && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-4 rounded-xl bg-red-900/40 border border-red-500/50 text-red-200 text-sm font-medium"
+          >
+            {authError}
+          </motion.div>
+        )}
+
         <div className="flex flex-col gap-3 pt-4">
           <button
             type="submit"
-            className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-lg transition-transform active:scale-95"
+            disabled={isValidating}
+            className="w-full py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-bold rounded-lg shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
           >
-            完成設定 並 開始同步
+            {isValidating && <Loader2 className="animate-spin" size={20} />}
+            {isValidating ? "正在驗證 Token..." : "完成設定 並 開始同步"}
           </button>
           
           {(formData.owner && formData.repo && formData.token) && (
