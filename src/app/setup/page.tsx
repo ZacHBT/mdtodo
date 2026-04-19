@@ -15,11 +15,19 @@ function SetupContent() {
   const searchParams = useSearchParams();
   const [isImporting, setIsImporting] = useState(false);
   const [formData, setFormData] = useState<VaultConfig>({
-    owner: "",
-    repo: "",
-    branch: "main",
-    token: "",
+    owner: config?.owner || "",
+    repo: config?.repo || "",
+    branch: config?.branch || "main",
+    token: config?.token || "",
   });
+
+  // Redirect if already configured
+  useEffect(() => {
+    const importData = searchParams.get("import");
+    if (config && !importData) {
+      router.push("/");
+    }
+  }, [config, router, searchParams]);
 
   // 偵測自動匯入參數
   useEffect(() => {

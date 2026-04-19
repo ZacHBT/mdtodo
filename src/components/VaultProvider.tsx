@@ -21,10 +21,23 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     const saved = localStorage.getItem("obsidian_vault_config");
+    let initialConfig: VaultConfig | null = null;
+
     if (saved) {
-      const parsedConfig = JSON.parse(saved);
-      setConfig(parsedConfig);
-      setService(new GitHubService(parsedConfig));
+      initialConfig = JSON.parse(saved);
+    } else if (process.env.NEXT_PUBLIC_GITHUB_TOKEN) {
+      // Fallback to environment variables
+      initialConfig = {
+        owner: process.env.NEXT_PUBLIC_GITHUB_OWNER || "",
+        repo: process.env.NEXT_PUBLIC_GITHUB_REPO || "",
+        branch: process.env.NEXT_PUBLIC_GITHUB_BRANCH || "main",
+        token: process.env.NEXT_PUBLIC_GITHUB_TOKEN
+      };
+    }
+
+    if (initialConfig) {
+      setConfig(initialConfig);
+      setService(new GitHubService(initialConfig));
     }
     setIsLoading(false);
   }, []);
