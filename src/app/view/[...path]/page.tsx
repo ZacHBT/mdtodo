@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useVault } from "@/components/VaultProvider";
 import { ObsidianTask } from "@/lib/types";
-import { ArrowLeft, Edit3, Save, Trash2, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { ArrowLeft, Edit3, Save, Trash2, CheckCircle2, Circle, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -94,47 +94,63 @@ export default function ViewPage() {
         </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto w-full">
-        {/* Metadata Banner - Neon High Contrast Style */}
-        <div className="mb-10 p-6 rounded-3xl bg-transparent border-2 border-purple-500/30 shadow-[inset_0_0_20px_rgba(168,85,247,0.05)]">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1.5 h-4 bg-purple-500 rounded-full animate-pulse" />
-            <span className="text-xs font-black text-purple-400 uppercase tracking-[0.3em]">Properties</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div className="space-y-1">
-              <div className="text-purple-300/50 text-[10px] font-black uppercase tracking-wider">Project Scope / 專案</div>
-              <div className="text-white text-lg font-bold wikilink inline-block">
-                {task.project?.replace(/\[\[|\]\]/g, "") || "No Project"}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-purple-300/50 text-[10px] font-black uppercase tracking-wider">Due Date / 日期</div>
-              <div className="text-white text-lg font-bold tracking-tight">
-                {task.date || "Not Scheduled"}
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Content Area - Pure Black Background */}
+      <div className="flex-1 p-6 overflow-y-auto w-full bg-[#000000]">
+        <style dangerouslySetInnerHTML={{ __html: `
+          .markdown-content p, 
+          .markdown-content li, 
+          .markdown-content h1, 
+          .markdown-content h2, 
+          .markdown-content h3, 
+          .markdown-content h4, 
+          .markdown-content h5, 
+          .markdown-content h6,
+          .markdown-content strong,
+          .markdown-content blockquote {
+            color: #FFFFFF !important;
+            opacity: 1 !important;
+          }
+          .markdown-content a { color: #A855F7 !important; text-decoration: underline; }
+          .markdown-content code { background: rgba(168, 85, 247, 0.2); color: #E9D5FF !important; padding: 2px 4px; border-radius: 4px; }
+          .markdown-content pre { background: #1a1a1a !important; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto; }
+          .markdown-content ul, .markdown-content ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+          .markdown-content li { margin-bottom: 0.5rem; }
+          .markdown-content h1, .markdown-content h2 { margin-top: 2rem; margin-bottom: 1rem; font-weight: 900; }
+        `}} />
 
-        {/* Markdown Render - Extreme Legibility */}
-        <div className="prose prose-invert prose-purple max-w-none 
-          prose-p:text-[#FFFFFF] prose-p:text-[17px] prose-p:leading-[1.8] prose-p:mb-6
-          prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
-          prose-headings:mt-12 prose-headings:mb-4
-          prose-strong:text-purple-300 prose-strong:font-black
-          prose-li:text-[#FFFFFF] prose-li:text-[17px] prose-li:mb-2
-          prose-code:bg-purple-500/10 prose-code:text-purple-200 prose-code:px-1.5 prose-code:rounded
-          prose-blockquote:border-purple-500 prose-blockquote:bg-purple-500/5 prose-blockquote:py-1
-        ">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {task.content}
-          </ReactMarkdown>
+        <div className="max-w-4xl mx-auto">
+          {/* Metadata Banner - Ultra High Contrast */}
+          <div className="mb-10 p-6 rounded-3xl bg-[#1a1a1a] border-2 border-white/20 shadow-2xl">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-2 h-5 bg-purple-500 rounded-full" />
+              <span className="text-sm font-black text-white uppercase tracking-[0.2em]">筆記屬性 / Properties</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+              <div className="space-y-2">
+                <div className="text-gray-400 text-xs font-bold uppercase tracking-widest">Project / 專案</div>
+                <div className="text-white text-xl font-black bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30 inline-block">
+                  {task.project?.replace(/\[\[|\]\]/g, "") || "未分類"}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-gray-400 text-xs font-bold uppercase tracking-widest">Due Date / 日期</div>
+                <div className="text-white text-xl font-black tracking-tight flex items-center gap-2">
+                  <CalendarIcon className="text-purple-400" size={20} />
+                  {task.date || "未排程"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Markdown Render Area */}
+          <div className="markdown-content text-[18px] leading-[1.8]">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {task.content}
+            </ReactMarkdown>
+          </div>
+          
+          <div className="h-32" />
         </div>
-        
-        {/* Safe padding at the bottom */}
-        <div className="h-24" />
       </div>
 
       {/* Floating Action Button */}
