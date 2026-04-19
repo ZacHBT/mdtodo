@@ -120,7 +120,10 @@ function SetupContent() {
             required
             placeholder="例如: ZacHBT"
             value={formData.owner}
-            onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/[^\x20-\x7E]/g, "").trim();
+              setFormData({ ...formData, owner: cleaned });
+            }}
           />
         </div>
 
@@ -133,7 +136,10 @@ function SetupContent() {
             required
             placeholder="例如: zac_vault"
             value={formData.repo}
-            onChange={(e) => setFormData({ ...formData, repo: e.target.value })}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/[^\x20-\x7E]/g, "").trim();
+              setFormData({ ...formData, repo: cleaned });
+            }}
           />
         </div>
 
@@ -145,7 +151,10 @@ function SetupContent() {
             type="text"
             required
             value={formData.branch}
-            onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+            onChange={(e) => {
+              const cleaned = e.target.value.replace(/[^\x20-\x7E]/g, "").trim();
+              setFormData({ ...formData, branch: cleaned });
+            }}
           />
         </div>
 
@@ -158,7 +167,11 @@ function SetupContent() {
             required
             placeholder="ghp_xxxxxxxxxxxx"
             value={formData.token}
-            onChange={(e) => setFormData({ ...formData, token: e.target.value })}
+            onChange={(e) => {
+              // 只保留 ASCII 字元與基本符號，過濾掉零寬空格或其他非法字元
+              const cleaned = e.target.value.replace(/[^\x20-\x7E]/g, "").trim();
+              setFormData({ ...formData, token: cleaned });
+            }}
           />
         </div>
 
