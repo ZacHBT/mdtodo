@@ -45,27 +45,28 @@ export class GitHubService {
       // 解析 YAML Frontmatter
       const { data: frontmatter, content: body } = matter(content);
 
-      // --- 強化解析器：區分 1_Projects 與 2_Task ---
-      const isProject = path.includes("1_Projects") || path.includes("1_Project");
+      // --- 強化解析器：動態識別屬性類型 ---
+      // 優先檢查是否有 Project 特有的欄位
+      const hasProjectFields = '專案狀態' in frontmatter || '建立日期' in frontmatter;
+      const isProject = hasProjectFields || path.includes("1_Projects") || path.includes("1_Project");
       
       let date = "";
       let status = false;
       let project = "";
 
       if (isProject) {
-        // Project 邏輯
-        date = frontmatter.建立日期 || "";
-        // 專案狀態通常是字串如 "進行中"，我們可以暫時將其存放在一個自定義欄位，或對應到 status
-        status = frontmatter.專案狀態 === "已完成";
-        project = frontmatter.類型 || "專案";
+        // Project 模式
+        date = frontmatter.建立日期 || frontmatter.date || "";
+        status = frontmatter.專案狀態 === "已完成" || frontmatter.status === "completed";
+        project = frontmatter.類型 || "";
       } else {
-        // Task 邏輯
-        date = frontmatter.日期 || "";
-        status = frontmatter.狀態 === true || frontmatter.status === "completed";
+        // Task 模式
+        date = frontmatter.日期 || frontmatter.date || "";
+        status = frontmatter.狀態 === true || frontmatter.status === "completed" || frontmatter.status === true;
         project = frontmatter.專案 || "";
       }
 
-      // 如果 YAML 沒解析到，嘗試 Regex 掃描全文 (備援機制)
+      // 如果 YAML 沒解析到，嘗試 Regex 掃描全文 (支援行內 Metadata)
       if (!date) {
         const dateRegex = isProject ? /建立日期\s*[:：]\s*([\d-]+)/ : /日期\s*[:：]\s*([\d-]+)/;
         const dateMatch = content.match(dateRegex);
@@ -76,10 +77,13 @@ export class GitHubService {
         }
       }
 
-      // 針對任務狀態的特殊處理
-      if (!isProject) {
-        if (content.includes("狀態: false") || content.includes("狀態 false")) status = false;
+      // 針對狀態的備援檢查
+      const contentLower = content.toLowerCase();
+      if (isProject) {
+        if (content.includes("專案狀態: \"已完成\"") || content.includes("專案狀態: 已完成")) status = true;
+      } else {
         if (content.includes("狀態: true") || content.includes("狀態 true")) status = true;
+        if (contentLower.includes("status: completed") || contentLower.includes("status: true")) status = true;
       }
 
       if (!project && !isProject) {
@@ -88,22 +92,24 @@ export class GitHubService {
       }
 
       // 清洗專案名稱中的 Wikilinks
-      project = typeof project === 'string' ? project.replace(/\[\[|\]\]/g, "").split("/").pop() || project : "";
+      if (project && typeof project === 'string') {
+        project = project.replace(/\[\[|\]\]/g, "").split("/").pop() || project;
+      }
 
       return {
         id: data.name.replace(".md", ""),
         path,
         title: (frontmatter.title || data.name).replace(".md", ""),
-        project,
+        project: String(project || ""),
         status,
-        date,
-        content: body || content, // 如果 body 為空說明沒 YAML，則取全文
+        date: String(date || ""),
+        content: body || content,
         sha: data.sha,
-        // 額外資訊可以放在 metadata 方便擴充
         metadata: {
           isProject,
           type: frontmatter.類型,
-          projectStatus: frontmatter.專案狀態
+          projectStatus: frontmatter.專案狀態,
+          originalMeta: frontmatter
         }
       } as any;
     } catch (error) {
