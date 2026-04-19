@@ -19,7 +19,9 @@ export default function ViewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const fullPath = Array.isArray(params.path) ? params.path.join("/") : params.path;
+  const fullPath = decodeURIComponent(
+    Array.isArray(params.path) ? params.path.join("/") : (params.path || "")
+  );
 
   useEffect(() => {
     if (service && fullPath) {

@@ -32,7 +32,19 @@ export default function ProjectsPage() {
     try {
       const projectPath = await service.findPathWithPrefix("1_") || "1_Project";
       const files = await service.getFiles(projectPath);
-      const mdFiles = files.filter(f => f.name.endsWith(".md"));
+      
+      // 關鍵過濾：排除 README, index 以及系統索引檔案
+      const mdFiles = files.filter(f => {
+        const name = f.name.toLowerCase();
+        return (
+          f.name.endsWith(".md") && 
+          name !== "readme.md" && 
+          name !== "index.md" && 
+          !name.includes("專案總覽") && 
+          !name.includes("總覽") &&
+          !name.includes("索引")
+        );
+      });
       setProjects(mdFiles);
     } catch (error: any) {
       console.error("Failed to load projects:", error);

@@ -39,16 +39,24 @@ export class GitHubService {
 
       if (data.type !== "file") return null;
 
-      const content = decodeURIComponent(escape(atob(data.content)));
+      // 使用更健壯的解碼方式
+      const content = Buffer.from(data.content, "base64").toString("utf-8");
       const { data: frontmatter, content: body } = matter(content);
+
+      // 解析日期：優先從 YAML 讀取，若無則從檔名 (YYYY-MM-DD) 擷取
+      let date = frontmatter.日期 || "";
+      if (!date) {
+        const dateMatch = data.name.match(/\d{4}-\d{2}-\d{2}/);
+        if (dateMatch) date = dateMatch[0];
+      }
 
       return {
         id: data.name.replace(".md", ""),
         path,
-        title: data.name.replace(".md", ""),
+        title: (frontmatter.title || data.name).replace(".md", ""),
         project: frontmatter.專案 || "",
-        status: frontmatter.狀態 === true,
-        date: frontmatter.日期 || "",
+        status: frontmatter.狀態 === true || frontmatter.status === "completed",
+        date: date,
         content: body,
         sha: data.sha,
       };
