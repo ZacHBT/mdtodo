@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useVault } from "@/components/VaultProvider";
 import { VaultConfig } from "@/lib/types";
 import { Button, Input } from "@/components/ui";
-import { Lock, Shield, FolderOpen, GitBranch, Sparkles } from "lucide-react";
+import { Lock, Shield, FolderOpen, GitBranch, Sparkles, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MagicSync } from "@/components/MagicSync";
 
@@ -180,6 +180,17 @@ function SetupContent() {
           >
             {isValidating && <Loader2 className="animate-spin" size={20} />}
             {isValidating ? "正在驗證 Token..." : "完成設定 並 開始同步"}
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("obsidian_vault_config");
+              window.location.reload();
+            }}
+            className="w-full py-2 bg-gray-800 hover:bg-gray-700 text-gray-400 text-xs rounded-lg transition-colors border border-gray-700"
+          >
+            清除所有舊設定 並 重新開始 (Reset)
           </button>
           
           {(formData.owner && formData.repo && formData.token) && (

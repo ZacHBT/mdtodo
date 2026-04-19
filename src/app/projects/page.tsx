@@ -30,12 +30,13 @@ export default function ProjectsPage() {
     setIsFetching(true);
     setError(null);
     try {
-      const files = await service.getFiles("1_Project");
+      const projectPath = await service.findPathWithPrefix("1_") || "1_Project";
+      const files = await service.getFiles(projectPath);
       const mdFiles = files.filter(f => f.name.endsWith(".md"));
       setProjects(mdFiles);
     } catch (error: any) {
       console.error("Failed to load projects:", error);
-      setError("無法讀取專案列表，請檢查您的目錄名稱是否為 '1_Project'。");
+      setError("無法讀取專案列表，請檢查 GitHub Token 權限與連線。");
     } finally {
       setIsFetching(false);
     }

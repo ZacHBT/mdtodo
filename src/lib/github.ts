@@ -71,4 +71,16 @@ export class GitHubService {
       branch: this.config.branch,
     });
   }
+
+  // 自動偵測 PARA 目錄名稱 (例如 1_Project 或 1_Projects)
+  async findPathWithPrefix(prefix: string): Promise<string> {
+    try {
+      const rootFiles = await this.getFiles("");
+      const match = rootFiles.find(f => f.type === "dir" && f.name.startsWith(prefix));
+      return match ? match.name : "";
+    } catch (error) {
+      console.error(`Error discovering path with prefix ${prefix}:`, error);
+      return "";
+    }
+  }
 }

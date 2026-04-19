@@ -33,8 +33,12 @@ export default function Dashboard() {
     setIsFetching(true);
     setError(null);
     try {
+      // 0. Auto-discover paths
+      const projectPath = await service.findPathWithPrefix("1_") || "1_Project";
+      const taskPath = await service.findPathWithPrefix("2_") || "2_Task";
+
       // 1. Load Tasks
-      const taskFiles = await service.getFiles("2_Task");
+      const taskFiles = await service.getFiles(taskPath);
       const today = format(new Date(), "yyyy-MM-dd");
       
       const loadedTasks: ObsidianTask[] = [];
@@ -49,7 +53,7 @@ export default function Dashboard() {
       setTasks(loadedTasks);
 
       // 2. Count Projects
-      const projFiles = await service.getFiles("1_Project");
+      const projFiles = await service.getFiles(projectPath);
       setProjectCount(projFiles.filter(f => f.name.endsWith(".md")).length);
 
     } catch (error: any) {
