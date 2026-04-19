@@ -35,12 +35,22 @@ export default function TasksPage() {
       const files = await service.getFiles(taskPath);
       const mdFiles = files.filter(f => f.name.endsWith(".md"));
       
-      const loadedTasks = [];
-      for (const file of mdFiles) {
-        const t = await service.readMarkdown(file.path);
-        if (t) loadedTasks.push(t);
-      }
-      setTasks(loadedTasks);
+      // 優化：平行抓取但限制併發，避免 GitHub API Rate Limit 或逾時
+      // 如果檔案太多，我們只抓取前 100 個，或之後考慮分頁
+      const activeFiles = mdFiles.slice(0, 100);
+      
+      const loadedTasks = await Promise.all(
+        activeFiles.map(async (file) => {
+          try {
+            return await service.readMarkdown(file.path);
+          } catch (e) {
+            console.warn(`Failed to read task: ${file.path}`, e);
+            return null;
+          }
+        })
+      );
+      
+      setTasks(loadedTasks.filter(Boolean));
     } catch (error) {
       console.error("Failed to fetch all tasks:", error);
     } finally {

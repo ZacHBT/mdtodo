@@ -79,16 +79,16 @@ export default function ViewPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-[#1e1e1e]">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-10 glass p-4 flex items-center gap-4">
-        <button onClick={() => router.back()} className="text-gray-400 p-1">
+      {/* Top Bar - Solid dark background for higher contrast */}
+      <div className="sticky top-0 z-10 bg-[#161616] border-b border-white/5 p-4 flex items-center gap-4">
+        <button onClick={() => router.back()} className="text-gray-400 p-1 hover:text-white transition-colors">
           <ArrowLeft size={24} />
         </button>
-        <h2 className="flex-1 font-bold text-white truncate">{task.title}</h2>
+        <h2 className="flex-1 font-bold text-white text-lg truncate drop-shadow-sm">{task.title}</h2>
         <button 
           onClick={toggleStatus}
           disabled={isSaving}
-          className={`p-2 rounded-full transition-colors ${task.status ? 'bg-green-900/40 text-green-400' : 'bg-gray-800 text-gray-400'}`}
+          className={`p-2 rounded-full transition-colors ${task.status ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-gray-800 text-gray-400 border border-transparent'}`}
         >
           {isSaving ? <Loader2 className="animate-spin" size={20} /> : (task.status ? <CheckCircle2 size={20} /> : <Circle size={20} />)}
         </button>
@@ -96,25 +96,31 @@ export default function ViewPage() {
 
       {/* Content */}
       <div className="flex-1 p-6 overflow-y-auto">
-        {/* Metadata Banner */}
-        <div className="mb-8 p-4 rounded-xl bg-purple-900/20 border border-purple-500/20">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold text-purple-400 uppercase tracking-widest">Metadata</span>
+        {/* Metadata Banner - Enhanced readability */}
+        <div className="mb-8 p-5 rounded-2xl bg-purple-500/5 border border-purple-500/20 shadow-inner">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-3 bg-purple-500 rounded-full" />
+            <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em]">Metadata</span>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-6 text-sm">
             <div>
-              <div className="text-gray-500 text-xs">專案</div>
-              <div className="text-white wikilink">{task.project?.replace(/\[\[|\]\]/g, "")}</div>
+              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">所屬專案</div>
+              <div className="text-white font-semibold wikilink drop-shadow-sm">{task.project?.replace(/\[\[|\]\]/g, "") || "未分類"}</div>
             </div>
             <div>
-              <div className="text-gray-500 text-xs">日期</div>
-              <div className="text-white">{task.date}</div>
+              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">目標執行日期</div>
+              <div className="text-white font-semibold drop-shadow-sm">{task.date || "未設定"}</div>
             </div>
           </div>
         </div>
 
-        {/* Markdown Render */}
-        <div className="prose prose-invert prose-purple max-w-none prose-p:text-gray-300 prose-headings:text-white">
+        {/* Markdown Render - Refined prose colors */}
+        <div className="prose prose-invert prose-purple max-w-none 
+          prose-p:text-gray-200 prose-p:leading-relaxed
+          prose-headings:text-white prose-headings:font-bold
+          prose-strong:text-white prose-strong:font-bold
+          prose-li:text-gray-200
+          prose-code:bg-black/30 prose-code:p-1 prose-code:rounded prose-code:text-purple-300">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {task.content}
           </ReactMarkdown>
