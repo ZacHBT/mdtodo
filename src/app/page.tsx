@@ -12,6 +12,7 @@ import { CalendarView } from "@/components/CalendarView";
 export default function Dashboard() {
   const { config, service, isLoading } = useVault();
   const router = useRouter();
+  const [tasks, setTasks] = useState<ObsidianTask[]>([]);
   const [allTasks, setAllTasks] = useState<ObsidianTask[]>([]);
   const [projectCount, setProjectCount] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
