@@ -78,63 +78,73 @@ export default function ViewPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#1e1e1e]">
-      {/* Top Bar - Solid dark background for higher contrast */}
-      <div className="sticky top-0 z-10 bg-[#161616] border-b border-white/5 p-4 flex items-center gap-4">
+    <div className="flex-1 flex flex-col bg-[#121212]">
+      {/* Top Bar - High Contrast Solid Black */}
+      <div className="sticky top-0 z-10 bg-[#000000] border-b border-white/10 p-5 flex items-center gap-4">
         <button onClick={() => router.back()} className="text-gray-400 p-1 hover:text-white transition-colors">
           <ArrowLeft size={24} />
         </button>
-        <h2 className="flex-1 font-bold text-white text-lg truncate drop-shadow-sm">{task.title}</h2>
+        <h2 className="flex-1 font-bold text-white text-xl truncate tracking-tight">{task.title}</h2>
         <button 
           onClick={toggleStatus}
           disabled={isSaving}
-          className={`p-2 rounded-full transition-colors ${task.status ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-gray-800 text-gray-400 border border-transparent'}`}
+          className={`p-2 rounded-full transition-all ${task.status ? 'bg-green-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-gray-800 text-gray-400'}`}
         >
-          {isSaving ? <Loader2 className="animate-spin" size={20} /> : (task.status ? <CheckCircle2 size={20} /> : <Circle size={20} />)}
+          {isSaving ? <Loader2 className="animate-spin" size={20} /> : (task.status ? <CheckCircle2 size={22} /> : <Circle size={22} />)}
         </button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-6 overflow-y-auto">
-        {/* Metadata Banner - Enhanced readability */}
-        <div className="mb-8 p-5 rounded-2xl bg-purple-500/5 border border-purple-500/20 shadow-inner">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-1 h-3 bg-purple-500 rounded-full" />
-            <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em]">Metadata</span>
+      <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto w-full">
+        {/* Metadata Banner - Neon High Contrast Style */}
+        <div className="mb-10 p-6 rounded-3xl bg-transparent border-2 border-purple-500/30 shadow-[inset_0_0_20px_rgba(168,85,247,0.05)]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1.5 h-4 bg-purple-500 rounded-full animate-pulse" />
+            <span className="text-xs font-black text-purple-400 uppercase tracking-[0.3em]">Properties</span>
           </div>
-          <div className="grid grid-cols-2 gap-6 text-sm">
-            <div>
-              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">所屬專案</div>
-              <div className="text-white font-semibold wikilink drop-shadow-sm">{task.project?.replace(/\[\[|\]\]/g, "") || "未分類"}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="space-y-1">
+              <div className="text-purple-300/50 text-[10px] font-black uppercase tracking-wider">Project Scope / 專案</div>
+              <div className="text-white text-lg font-bold wikilink inline-block">
+                {task.project?.replace(/\[\[|\]\]/g, "") || "No Project"}
+              </div>
             </div>
-            <div>
-              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">目標執行日期</div>
-              <div className="text-white font-semibold drop-shadow-sm">{task.date || "未設定"}</div>
+            <div className="space-y-1">
+              <div className="text-purple-300/50 text-[10px] font-black uppercase tracking-wider">Due Date / 日期</div>
+              <div className="text-white text-lg font-bold tracking-tight">
+                {task.date || "Not Scheduled"}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Markdown Render - Refined prose colors */}
+        {/* Markdown Render - Extreme Legibility */}
         <div className="prose prose-invert prose-purple max-w-none 
-          prose-p:text-gray-200 prose-p:leading-relaxed
-          prose-headings:text-white prose-headings:font-bold
-          prose-strong:text-white prose-strong:font-bold
-          prose-li:text-gray-200
-          prose-code:bg-black/30 prose-code:p-1 prose-code:rounded prose-code:text-purple-300">
+          prose-p:text-[#FFFFFF] prose-p:text-[17px] prose-p:leading-[1.8] prose-p:mb-6
+          prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
+          prose-headings:mt-12 prose-headings:mb-4
+          prose-strong:text-purple-300 prose-strong:font-black
+          prose-li:text-[#FFFFFF] prose-li:text-[17px] prose-li:mb-2
+          prose-code:bg-purple-500/10 prose-code:text-purple-200 prose-code:px-1.5 prose-code:rounded
+          prose-blockquote:border-purple-500 prose-blockquote:bg-purple-500/5 prose-blockquote:py-1
+        ">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {task.content}
           </ReactMarkdown>
         </div>
+        
+        {/* Safe padding at the bottom */}
+        <div className="h-24" />
       </div>
 
       {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-4">
+      <div className="fixed bottom-8 right-8 flex flex-col gap-4">
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.1, rotate: 5 }}
           whileTap={{ scale: 0.9 }}
-          className="p-4 bg-purple-600 rounded-full shadow-2xl text-white"
+          className="p-5 bg-purple-600 rounded-2xl shadow-[0_10px_40px_rgba(147,51,234,0.4)] text-white"
         >
-          <Edit3 size={24} />
+          <Edit3 size={28} />
         </motion.button>
       </div>
     </div>

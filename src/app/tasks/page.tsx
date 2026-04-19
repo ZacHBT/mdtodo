@@ -35,24 +35,32 @@ export default function TasksPage() {
       const files = await service.getFiles(taskPath);
       const mdFiles = files.filter(f => f.name.endsWith(".md"));
       
-      // 優化：平行抓取但限制併發，避免 GitHub API Rate Limit 或逾時
-      // 如果檔案太多，我們只抓取前 100 個，或之後考慮分頁
-      const activeFiles = mdFiles.slice(0, 100);
+      // 改用序列批次抓取，確保 Vercel 不會燒掉或觸發 GitHub 401/429
+      const allLoadedTasks: any[] = [];
+      const batchSize = 10;
       
-      const loadedTasks = await Promise.all(
-        activeFiles.map(async (file) => {
-          try {
-            return await service.readMarkdown(file.path);
-          } catch (e) {
-            console.warn(`Failed to read task: ${file.path}`, e);
-            return null;
-          }
-        })
-      );
-      
-      setTasks(loadedTasks.filter(Boolean));
+      // 限制總數以確保流暢度
+      const targetFiles = mdFiles.slice(0, 150);
+
+      for (let i = 0; i < targetFiles.length; i += batchSize) {
+        const batch = targetFiles.slice(i, i + batchSize);
+        const batchResults = await Promise.all(
+          batch.map(async (file) => {
+            try {
+              return await service.readMarkdown(file.path);
+            } catch (e) {
+              console.warn(`Error loading ${file.path}:`, e);
+              return null;
+            }
+          })
+        );
+        allLoadedTasks.push(...batchResults.filter(Boolean));
+        
+        // 每一批次完成後更新一次 UI，展現「漸進式加載」
+        setTasks([...allLoadedTasks]);
+      }
     } catch (error) {
-      console.error("Failed to fetch all tasks:", error);
+      console.error("Critical failure during task fetch:", error);
     } finally {
       setIsFetching(false);
     }
