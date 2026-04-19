@@ -53,7 +53,7 @@ export default function Dashboard() {
           const task = await service.readMarkdown(file.path);
           if (task) {
             allLoadedTasks.push(task);
-            if (task.date === todayStr && !task.status) {
+            if (task.date === todayStr) {
               dayTasks.push(task);
             }
           }
@@ -78,7 +78,7 @@ export default function Dashboard() {
     setSelectedDate(date);
     // 快速過濾已載入的任務
     const todayStr = format(date, "yyyy-MM-dd");
-    const filtered = allTasks.filter(t => t.date === todayStr && !t.status);
+    const filtered = allTasks.filter(t => t.date === todayStr);
     setTasks(filtered);
   };
 
@@ -183,17 +183,18 @@ export default function Dashboard() {
                     const segments = task.path.split('/').map((s: string) => encodeURIComponent(s));
                     router.push(`/view/${segments.join('/')}`);
                   }}
-                  className="glass-dark p-4 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all cursor-pointer"
+                  className={`glass-dark p-4 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all cursor-pointer ${task.status ? 'opacity-40' : ''}`}
                 >
-                  <div className="w-1.5 h-10 bg-purple-500 rounded-full" />
+                  <div className={`w-1.5 h-10 ${task.status ? 'bg-gray-500' : 'bg-purple-500'} rounded-full`} />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-white font-semibold text-sm truncate">{task.title}</h4>
+                    <h4 className={`text-white font-semibold text-sm truncate ${task.status ? 'line-through decoration-gray-400' : ''}`}>{task.title}</h4>
                     {task.project && (
                       <span className="text-[10px] font-bold text-purple-400/60 uppercase tracking-widest">
                         {task.project.replace(/\[\[|\]\]/g, "")}
                       </span>
                     )}
                   </div>
+                  {task.status && <CheckCircle2 size={16} className="text-gray-500" />}
                 </motion.div>
               ))
             ) : (
