@@ -19,9 +19,9 @@ export default function ViewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const fullPath = decodeURIComponent(
-    Array.isArray(params.path) ? params.path.join("/") : (params.path || "")
-  );
+  const fullPath = Array.isArray(params.path) 
+    ? params.path.map(p => decodeURIComponent(p)).join("/") 
+    : (params.path ? decodeURIComponent(params.path) : "");
 
   useEffect(() => {
     if (service && fullPath) {
@@ -32,7 +32,9 @@ export default function ViewPage() {
   const loadContent = async () => {
     if (!fullPath) return;
     setIsLoading(true);
-    const data = await service?.readMarkdown(fullPath + (fullPath.endsWith(".md") ? "" : ".md"));
+    // 確保路徑以 .md 結尾
+    const targetPath = fullPath.endsWith(".md") ? fullPath : `${fullPath}.md`;
+    const data = await service?.readMarkdown(targetPath);
     if (data) setTask(data);
     setIsLoading(false);
   };
@@ -43,14 +45,26 @@ export default function ViewPage() {
     
     try {
       const newStatus = !task.status;
-      const newFrontmatter = {
-        專案: task.project,
-        狀態: newStatus,
-        日期: task.date,
-      };
+      const meta: any = (task as any).metadata || {};
+      
+      let newFrontmatter: any = {};
+      
+      if (meta.isProject) {
+        newFrontmatter = {
+          專案狀態: newStatus ? "已完成" : "進行中",
+          類型: task.project, // 在 Project 中我們存放在 project 欄位
+          建立日期: task.date,
+        };
+      } else {
+        newFrontmatter = {
+          專案: task.project,
+          狀態: newStatus,
+          日期: task.date,
+        };
+      }
       
       const newContent = matter.stringify(task.content, newFrontmatter);
-      await service.updateFile(task.path, newContent, task.sha, `Update task status: ${task.title}`);
+      await service.updateFile(task.path, newContent, task.sha, `Update status: ${task.title}`);
       
       setTask({ ...task, status: newStatus });
       router.refresh();
@@ -71,11 +85,15 @@ export default function ViewPage() {
 
   if (!task) {
     return (
-      <div className="flex-1 p-6 text-gray-500 text-center">
-        找不到檔案：{fullPath}
+      <div className="flex-1 p-6 text-gray-500 text-center bg-[#1e1e1e]">
+        <h2 className="text-xl font-bold text-white mb-2">找不到檔案</h2>
+        <p className="mb-6 opacity-60">{fullPath}</p>
+        <Button onClick={() => router.back()}>返回上一頁</Button>
       </div>
     );
   }
+
+  const meta: any = (task as any).metadata || {};
 
   return (
     <div className="flex-1 flex flex-col bg-[#121212]">
@@ -127,13 +145,19 @@ export default function ViewPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
               <div className="space-y-2">
-                <div className="text-gray-400 text-xs font-bold uppercase tracking-widest">Project / 專案</div>
+                <div className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+                  {meta.isProject ? "Project Status / 專案狀態" : "Project / 專案"}
+                </div>
                 <div className="text-white text-xl font-black bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30 inline-block">
-                  {task.project?.replace(/\[\[|\]\]/g, "") || "未分類"}
+                  {meta.isProject 
+                    ? (meta.projectStatus || "進行中") 
+                    : (task.project?.replace(/\[\[|\]\]/g, "") || "未分類")}
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-gray-400 text-xs font-bold uppercase tracking-widest">Due Date / 日期</div>
+                <div className="text-gray-400 text-xs font-bold uppercase tracking-widest">
+                  {meta.isProject ? "Created Date / 建立日期" : "Due Date / 日期"}
+                </div>
                 <div className="text-white text-xl font-black tracking-tight flex items-center gap-2">
                   <CalendarIcon className="text-purple-400" size={20} />
                   {task.date || "未排程"}

@@ -45,14 +45,30 @@ export class GitHubService {
       // 解析 YAML Frontmatter
       const { data: frontmatter, content: body } = matter(content);
 
-      // --- 強化解析器：支援 Obsidian 行內 Metadata (例如: 日期 2026-04-19) ---
-      let date = frontmatter.日期 || "";
-      let status = frontmatter.狀態 === true || frontmatter.status === "completed";
-      let project = frontmatter.專案 || "";
+      // --- 強化解析器：區分 1_Projects 與 2_Task ---
+      const isProject = path.includes("1_Projects") || path.includes("1_Project");
+      
+      let date = "";
+      let status = false;
+      let project = "";
 
-      // 如果 YAML 沒解析到，嘗試 Regex 掃描全文
+      if (isProject) {
+        // Project 邏輯
+        date = frontmatter.建立日期 || "";
+        // 專案狀態通常是字串如 "進行中"，我們可以暫時將其存放在一個自定義欄位，或對應到 status
+        status = frontmatter.專案狀態 === "已完成";
+        project = frontmatter.類型 || "專案";
+      } else {
+        // Task 邏輯
+        date = frontmatter.日期 || "";
+        status = frontmatter.狀態 === true || frontmatter.status === "completed";
+        project = frontmatter.專案 || "";
+      }
+
+      // 如果 YAML 沒解析到，嘗試 Regex 掃描全文 (備援機制)
       if (!date) {
-        const dateMatch = content.match(/日期\s+([\d-]+)/);
+        const dateRegex = isProject ? /建立日期\s*[:：]\s*([\d-]+)/ : /日期\s*[:：]\s*([\d-]+)/;
+        const dateMatch = content.match(dateRegex);
         if (dateMatch) date = dateMatch[1];
         else {
           const filenameMatch = data.name.match(/\d{4}-\d{2}-\d{2}/);
@@ -60,16 +76,19 @@ export class GitHubService {
         }
       }
 
-      if (content.includes("狀態 false")) status = false;
-      if (content.includes("狀態 true")) status = true;
+      // 針對任務狀態的特殊處理
+      if (!isProject) {
+        if (content.includes("狀態: false") || content.includes("狀態 false")) status = false;
+        if (content.includes("狀態: true") || content.includes("狀態 true")) status = true;
+      }
 
-      if (!project) {
-        const projectMatch = content.match(/專案\s+\[\[(.*?)\]\]/);
+      if (!project && !isProject) {
+        const projectMatch = content.match(/專案\s*[:：]\s*\[\[(.*?)\]\]/);
         if (projectMatch) project = projectMatch[1];
       }
 
       // 清洗專案名稱中的 Wikilinks
-      project = project.replace(/\[\[|\]\]/g, "").split("/").pop() || project;
+      project = typeof project === 'string' ? project.replace(/\[\[|\]\]/g, "").split("/").pop() || project : "";
 
       return {
         id: data.name.replace(".md", ""),
@@ -80,7 +99,13 @@ export class GitHubService {
         date,
         content: body || content, // 如果 body 為空說明沒 YAML，則取全文
         sha: data.sha,
-      };
+        // 額外資訊可以放在 metadata 方便擴充
+        metadata: {
+          isProject,
+          type: frontmatter.類型,
+          projectStatus: frontmatter.專案狀態
+        }
+      } as any;
     } catch (error) {
       console.error(`Error reading ${path}:`, error);
       return null;
