@@ -77,6 +77,15 @@ export class GitHubService {
         }
       }
 
+      // --- 強制規格化日期格式 ---
+      if (date) {
+        // 如果是 Date 物件轉出來的字串，提取 前 10 碼 YYYY-MM-DD
+        const isoMatch = String(date).match(/(\d{4}-\d{2}-\d{2})/);
+        if (isoMatch) {
+          date = isoMatch[1];
+        }
+      }
+
       // 針對狀態的備援檢查
       const contentLower = content.toLowerCase();
       if (isProject) {
