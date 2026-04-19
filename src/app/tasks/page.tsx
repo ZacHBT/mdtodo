@@ -193,7 +193,10 @@ export default function TasksPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                onClick={() => router.push(`/view/${encodeURIComponent(t.path)}`)}
+                onClick={() => {
+                  const segments = t.path.split('/').map(s => encodeURIComponent(s));
+                  router.push(`/view/${segments.join('/')}`);
+                }}
                 className="bg-[#2a2a2a] p-6 rounded-3xl flex items-center gap-5 border-2 border-white/5 hover:border-purple-500/50 active:scale-[0.98] transition-all cursor-pointer group shadow-xl"
               >
                 <div className={`p-1 rounded-full transition-colors ${t.status ? 'text-green-400' : 'text-gray-600 group-hover:text-purple-400'}`}>
