@@ -32,36 +32,36 @@ export function CalendarView({ tasks, currentDate, onDateClick, onMonthChange }:
   }, [tasks]);
 
   return (
-    <div className="bg-[#1a1a1a] rounded-3xl p-6 border border-white/5 shadow-2xl">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-xl font-bold text-white tracking-tight">
+    <div className="bg-[#1a1a1a] rounded-3xl p-4 border border-white/5 shadow-2xl">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-bold text-white tracking-tight">
           {format(currentDate, "yyyy年 MM月")}
         </h3>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <button 
             onClick={() => onMonthChange(subMonths(currentDate, 1))}
-            className="p-2 hover:bg-gray-800 rounded-full transition-colors text-gray-400"
+            className="p-1.5 hover:bg-gray-800 rounded-full transition-colors text-gray-400"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={16} />
           </button>
           <button 
             onClick={() => onMonthChange(addMonths(currentDate, 1))}
-            className="p-2 hover:bg-gray-800 rounded-full transition-colors text-gray-400"
+            className="p-1.5 hover:bg-gray-800 rounded-full transition-colors text-gray-400"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
         {daysOfWeek.map(d => (
-          <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest py-2">
+          <div key={d} className="text-center text-[9px] font-bold text-gray-600 uppercase tracking-tighter py-1">
             {d}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1">
         {blanks.map((_, i) => (
           <div key={`blank-${i}`} className="aspect-square" />
         ))}
@@ -74,25 +74,17 @@ export function CalendarView({ tasks, currentDate, onDateClick, onMonthChange }:
             <button
               key={dateStr}
               onClick={() => onDateClick?.(day)}
-              className={`relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all hover:bg-white/10 group ${
-                isToday ? 'bg-purple-600/20 ring-1 ring-purple-500/50' : 'bg-gray-800/20'
+              className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all hover:bg-white/10 group ${
+                isToday ? 'bg-purple-600/30 ring-1 ring-purple-500/50 scale-105 z-10' : 'bg-gray-800/10'
               }`}
             >
-              <span className={`text-xs font-semibold ${isToday ? 'text-purple-400' : 'text-gray-400 group-hover:text-white'}`}>
+              <span className={`text-[10px] font-bold ${isToday ? 'text-white' : 'text-gray-500 group-hover:text-white'}`}>
                 {format(day, "d")}
               </span>
               
-              {dayTasks && (
-                <div className="mt-1 flex gap-0.5">
-                  {dayTasks.total > 0 && (
-                    <div className={`w-1 h-1 rounded-full ${dayTasks.completed === dayTasks.total ? 'bg-green-500' : 'bg-purple-500'}`} />
-                  )}
-                </div>
-              )}
-
-              {dayTasks && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-600 rounded-full text-[8px] flex items-center justify-center text-white scale-0 group-hover:scale-100 transition-transform">
-                  {dayTasks.total}
+              {dayTasks && dayTasks.total > 0 && (
+                <div className="mt-0.5 flex gap-0.5">
+                  <div className={`w-0.5 h-0.5 rounded-full ${dayTasks.completed === dayTasks.total ? 'bg-green-400' : 'bg-purple-400'}`} />
                 </div>
               )}
             </button>

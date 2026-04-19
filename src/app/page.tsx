@@ -179,7 +179,7 @@ export default function Dashboard() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  onClick={() => router.push(`/view/${task.path}`)}
+                  onClick={() => router.push(`/view/${encodeURIComponent(task.path)}`)}
                   className="glass-dark p-4 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   <div className="w-1.5 h-10 bg-purple-500 rounded-full" />

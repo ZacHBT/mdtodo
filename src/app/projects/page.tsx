@@ -101,7 +101,8 @@ export default function ProjectsPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="glass-dark p-5 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all"
+                    onClick={() => router.push(`/view/${encodeURIComponent(proj.path)}`)}
+                    className="glass-dark p-5 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all cursor-pointer hover:bg-white/5"
                   >
                     <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
                       <Folder size={24} />

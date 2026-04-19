@@ -118,7 +118,7 @@ export default function TasksPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.02 }}
-                onClick={() => router.push(`/view/${t.path}`)}
+                onClick={() => router.push(`/view/${encodeURIComponent(t.path)}`)}
                 className="glass-dark p-5 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all cursor-pointer"
               >
                 <div className={`p-2 rounded-full ${t.status ? 'text-green-400' : 'text-gray-600'}`}>
