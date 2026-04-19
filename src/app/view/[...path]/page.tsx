@@ -28,6 +28,7 @@ export default function ViewPage() {
   }, [service, fullPath]);
 
   const loadContent = async () => {
+    if (!fullPath) return;
     setIsLoading(true);
     const data = await service?.readMarkdown(fullPath + (fullPath.endsWith(".md") ? "" : ".md"));
     if (data) setTask(data);
