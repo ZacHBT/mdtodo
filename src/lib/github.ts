@@ -21,9 +21,9 @@ export class GitHubService {
         ref: this.config.branch,
       });
       return Array.isArray(data) ? data : [data];
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error fetching files from ${path}:`, error);
-      return [];
+      throw error; // Throw error to allow UI to diagnose
     }
   }
 
