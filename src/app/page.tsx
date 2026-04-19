@@ -9,6 +9,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 
 export default function Dashboard() {
+  const { config, service, isLoading } = useVault();
+  const router = useRouter();
+  const [tasks, setTasks] = useState<ObsidianTask[]>([]);
+  const [projectCount, setProjectCount] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,20 +24,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (service) {
-      loadTodayTasks();
+      loadDashboardData();
     }
   }, [service]);
 
-  const loadTodayTasks = async () => {
+  const loadDashboardData = async () => {
     if (!service) return;
     setIsFetching(true);
     setError(null);
     try {
-      const files = await service.getFiles("2_Task");
+      // 1. Load Tasks
+      const taskFiles = await service.getFiles("2_Task");
       const today = format(new Date(), "yyyy-MM-dd");
       
       const loadedTasks: ObsidianTask[] = [];
-      for (const file of files) {
+      for (const file of taskFiles) {
         if (file.name.endsWith(".md")) {
           const task = await service.readMarkdown(file.path);
           if (task && task.date === today && !task.status) {
@@ -41,12 +47,17 @@ export default function Dashboard() {
         }
       }
       setTasks(loadedTasks);
+
+      // 2. Count Projects
+      const projFiles = await service.getFiles("1_Project");
+      setProjectCount(projFiles.filter(f => f.name.endsWith(".md")).length);
+
     } catch (error: any) {
-      console.error("Failed to load tasks:", error);
+      console.error("Failed to load data:", error);
       if (error.status === 401) {
         setError("GitHub Token 無效或已過期，請重新設定。");
       } else if (error.status === 404) {
-        setError("找不到指定的 Repository 或 '2_Task' 資料夾。");
+        setError("找不到指定的 Repository 或資料夾。");
       } else {
         setError("連線失敗，請檢查網路或 GitHub 設定。");
       }
@@ -100,19 +111,25 @@ export default function Dashboard() {
           <>
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="glass-dark p-5 rounded-2xl border border-white/5">
+              <div 
+                onClick={() => router.push("/")}
+                className="glass-dark p-5 rounded-2xl border border-white/5 active:scale-95 transition-all cursor-pointer"
+              >
                 <div className="text-purple-400 mb-2">
                   <ListTodo size={22} />
                 </div>
                 <div className="text-3xl font-bold text-white">{tasks.length}</div>
                 <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">待辦任務</div>
               </div>
-              <div className="glass-dark p-5 rounded-2xl border border-white/5">
+              <div 
+                onClick={() => router.push("/projects")}
+                className="glass-dark p-5 rounded-2xl border border-white/5 active:scale-95 transition-all cursor-pointer"
+              >
                 <div className="text-blue-400 mb-2">
                   <LayoutGrid size={22} />
                 </div>
-                <div className="text-3xl font-bold text-white">PARA</div>
-                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">筆記系統</div>
+                <div className="text-3xl font-bold text-white">{projectCount}</div>
+                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">活躍專案</div>
               </div>
             </div>
 
@@ -165,17 +182,26 @@ export default function Dashboard() {
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#161616]/80 backdrop-blur-lg border-t border-gray-800 flex items-center justify-around px-4">
-        <button className="flex flex-col items-center gap-1 text-purple-500">
+        <button 
+          onClick={() => router.push("/")}
+          className="flex flex-col items-center gap-1 text-purple-500 active:scale-90 transition-transform"
+        >
           <ListTodo size={24} />
-          <span className="text-[10px]">任務</span>
+          <span className="text-[10px] font-bold">任務</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-white">
+        <button 
+          onClick={() => router.push("/projects")}
+          className="flex flex-col items-center gap-1 text-gray-500 hover:text-white active:scale-90 transition-transform"
+        >
           <LayoutGrid size={24} />
-          <span className="text-[10px]">專案</span>
+          <span className="text-[10px] font-bold">專案</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-white">
+        <button 
+          onClick={() => router.push("/setup")}
+          className="flex flex-col items-center gap-1 text-gray-500 hover:text-white active:scale-90 transition-transform"
+        >
           <Settings size={24} />
-          <span className="text-[10px]">設定</span>
+          <span className="text-[10px] font-bold">設定</span>
         </button>
       </nav>
     </div>
