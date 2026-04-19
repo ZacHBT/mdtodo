@@ -186,7 +186,7 @@ export default function TasksPage() {
         {/* Task List */}
         <div className="grid grid-cols-1 gap-5">
           <AnimatePresence mode="popLayout">
-            {filteredTasks.map((t, index) => (
+            {filteredTasks.map((t: any, index) => (
               <motion.div
                 key={t.id || t.path}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -194,7 +194,7 @@ export default function TasksPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => {
-                  const segments = t.path.split('/').map(s => encodeURIComponent(s));
+                  const segments = t.path.split('/').map((s: string) => encodeURIComponent(s));
                   router.push(`/view/${segments.join('/')}`);
                 }}
                 className="bg-[#2a2a2a] p-6 rounded-3xl flex items-center gap-5 border-2 border-white/5 hover:border-purple-500/50 active:scale-[0.98] transition-all cursor-pointer group shadow-xl"
