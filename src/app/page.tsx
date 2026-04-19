@@ -4,15 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useVault } from "@/components/VaultProvider";
 import { ObsidianTask } from "@/lib/types";
-import { CheckCircle2, Circle, Clock, LayoutGrid, ListTodo, Settings, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Clock, LayoutGrid, ListTodo, Settings, Loader2, Calendar as CalendarIcon, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { CalendarView } from "@/components/CalendarView";
 
 export default function Dashboard() {
   const { config, service, isLoading } = useVault();
   const router = useRouter();
-  const [tasks, setTasks] = useState<ObsidianTask[]>([]);
+  const [allTasks, setAllTasks] = useState<ObsidianTask[]>([]);
   const [projectCount, setProjectCount] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +29,7 @@ export default function Dashboard() {
     if (service) {
       loadDashboardData();
     }
-  }, [service]);
+  }, [service, currentMonth]);
 
   const loadDashboardData = async () => {
     if (!service) return;
@@ -37,37 +40,45 @@ export default function Dashboard() {
       const projectPath = await service.findPathWithPrefix("1_") || "1_Project";
       const taskPath = await service.findPathWithPrefix("2_") || "2_Task";
 
-      // 1. Load Tasks
+      // 1. Fetch ALL tasks for the calendar (needed for distribution)
       const taskFiles = await service.getFiles(taskPath);
-      const today = format(new Date(), "yyyy-MM-dd");
+      const todayStr = format(selectedDate, "yyyy-MM-dd");
       
-      const loadedTasks: ObsidianTask[] = [];
+      const dayTasks: ObsidianTask[] = [];
+      const allLoadedTasks: ObsidianTask[] = [];
+
       for (const file of taskFiles) {
         if (file.name.endsWith(".md")) {
           const task = await service.readMarkdown(file.path);
-          if (task && task.date === today && !task.status) {
-            loadedTasks.push(task);
+          if (task) {
+            allLoadedTasks.push(task);
+            if (task.date === todayStr && !task.status) {
+              dayTasks.push(task);
+            }
           }
         }
       }
-      setTasks(loadedTasks);
+      setTasks(dayTasks);
+      setAllTasks(allLoadedTasks);
 
       // 2. Count Projects
       const projFiles = await service.getFiles(projectPath);
-      setProjectCount(projFiles.filter(f => f.name.endsWith(".md")).length);
+      setProjectCount(projFiles.filter(f => f.name.endsWith(".md") && !f.name.includes("專案總覽")).length);
 
     } catch (error: any) {
       console.error("Failed to load data:", error);
-      if (error.status === 401) {
-        setError("GitHub Token 無效或已過期，請重新設定。");
-      } else if (error.status === 404) {
-        setError("找不到指定的 Repository 或資料夾。");
-      } else {
-        setError("連線失敗，請檢查網路或 GitHub 設定。");
-      }
+      setError("無法同步數據，請檢查您的 Token 與 Repository。");
     } finally {
       setIsFetching(false);
     }
+  };
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    // 快速過濾已載入的任務
+    const todayStr = format(date, "yyyy-MM-dd");
+    const filtered = allTasks.filter(t => t.date === todayStr && !t.status);
+    setTasks(filtered);
   };
 
   if (isLoading) {
@@ -81,117 +92,139 @@ export default function Dashboard() {
   if (!config) return null;
 
   return (
-    <div className="flex-1 bg-[#1e1e1e] pb-20 overflow-y-auto">
+    <div className="flex-1 bg-[#1e1e1e] pb-24 overflow-y-auto overflow-x-hidden">
       {/* Header */}
-      <header className="p-6 pt-12">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">今日專注</h1>
-            <p className="text-gray-400 font-medium">{format(new Date(), "yyyy年MM月dd日 EEEE")}</p>
+      <header className="p-6 pt-12 flex items-center justify-between">
+        <div>
+          <h2 className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mb-1">Obsidian Web PARA</h2>
+          <h1 className="text-3xl font-bold text-white tracking-tight">你好, Zac</h1>
+        </div>
+        <button 
+          onClick={() => router.push("/setup")}
+          className="p-3 bg-gray-800 rounded-2xl text-gray-400 hover:text-white transition-colors"
+        >
+          <Settings size={20} />
+        </button>
+      </header>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-4 px-6 mb-8 mt-2">
+        <motion.div 
+          whileHover={{ y: -4 }}
+          onClick={() => router.push("/tasks")}
+          className="glass-purple p-5 rounded-3xl cursor-pointer"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-purple-500/20 rounded-lg text-purple-300">
+              <ListTodo size={18} />
+            </div>
           </div>
+          <div className="text-3xl font-bold text-white mb-1">{allTasks.filter(t => !t.status).length}</div>
+          <div className="text-purple-300/60 text-[10px] font-bold uppercase tracking-wider">待辦任務</div>
+        </motion.div>
+
+        <motion.div 
+          whileHover={{ y: -4 }}
+          onClick={() => router.push("/projects")}
+          className="glass-dark p-5 rounded-3xl cursor-pointer"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-300">
+              <LayoutGrid size={18} />
+            </div>
+          </div>
+          <div className="text-3xl font-bold text-white mb-1">{projectCount}</div>
+          <div className="text-blue-300/60 text-[10px] font-bold uppercase tracking-wider">活躍專案</div>
+        </motion.div>
+      </div>
+
+      {/* Calendar Section */}
+      <div className="px-6 mb-8">
+        <CalendarView 
+          tasks={allTasks.map(t => ({ date: t.date, status: t.status }))}
+          currentDate={currentMonth}
+          onMonthChange={setCurrentMonth}
+          onDateClick={handleDateClick}
+        />
+      </div>
+
+      {/* Task List Section */}
+      <div className="px-6 space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <CalendarIcon size={18} className="text-purple-500" />
+            {format(selectedDate, "MM月dd日")} 的任務
+          </h3>
           <button 
-            onClick={() => router.push("/setup")}
-            className="p-2.5 bg-gray-800/80 hover:bg-gray-700 rounded-xl text-gray-400 hover:text-white transition-colors border border-gray-700"
+            onClick={() => router.push("/tasks")}
+            className="text-[10px] font-bold text-gray-500 uppercase tracking-widest hover:text-purple-400"
           >
-            <Settings size={20} />
+            查看全部
           </button>
         </div>
 
-        {error ? (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-6 rounded-2xl bg-red-900/20 border border-red-500/30 text-center"
-          >
-            <div className="text-red-400 font-medium mb-3">{error}</div>
-            <button 
-              onClick={() => router.push("/setup")}
-              className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm transition-all"
-            >
-              重新前往設定頁面
-            </button>
-          </motion.div>
-        ) : (
-          <>
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div 
-                onClick={() => router.push("/")}
-                className="glass-dark p-5 rounded-2xl border border-white/5 active:scale-95 transition-all cursor-pointer"
-              >
-                <div className="text-purple-400 mb-2">
-                  <ListTodo size={22} />
-                </div>
-                <div className="text-3xl font-bold text-white">{tasks.length}</div>
-                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">待辦任務</div>
-              </div>
-              <div 
-                onClick={() => router.push("/projects")}
-                className="glass-dark p-5 rounded-2xl border border-white/5 active:scale-95 transition-all cursor-pointer"
-              >
-                <div className="text-blue-400 mb-2">
-                  <LayoutGrid size={22} />
-                </div>
-                <div className="text-3xl font-bold text-white">{projectCount}</div>
-                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">活躍專案</div>
-              </div>
-            </div>
-
-            {/* Task List */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center px-2">
-                <h2 className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">任務清單</h2>
-                {isFetching && <Loader2 className="animate-spin text-gray-500" size={14} />}
-              </div>
-              
-              <AnimatePresence>
-                {tasks.length > 0 ? (
-                  tasks.map((task) => (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="glass-dark p-5 rounded-2xl flex items-start gap-4 active:scale-[0.98] transition-all border border-white/5 hover:border-white/10"
-                      onClick={() => router.push(`/view/2_Task/${task.id}`)}
-                    >
-                      <div className="mt-1 text-gray-600">
-                        <Circle size={24} strokeWidth={1.5} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-semibold mb-1 truncate">{task.title}</h3>
-                        <div className="flex items-center gap-2 text-[10px]">
-                          <span className="px-2 py-0.5 bg-purple-900/40 text-purple-300 rounded-md border border-purple-500/20 font-bold">
-                            {task.project?.replace(/\[\[|\]\]/g, "") || "Inbox"}
-                          </span>
-                          <span className="text-gray-500 flex items-center gap-1 font-medium">
-                            <Clock size={10} /> {task.date}
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  !isFetching && (
-                    <div className="glass-dark rounded-2xl p-12 text-center border border-dashed border-white/5">
-                      <div className="text-gray-500 font-medium italic">今天沒有待辦任務</div>
-                    </div>
-                  )
-                )}
-              </AnimatePresence>
-            </div>
-          </>
+        {error && (
+          <div className="p-4 rounded-xl bg-red-900/20 border border-red-500/30 text-red-400 text-xs text-center">
+            {error}
+          </div>
         )}
-      </header>
+
+        <div className="grid grid-cols-1 gap-3">
+          <AnimatePresence>
+            {tasks.length > 0 ? (
+              tasks.map((task, index) => (
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => router.push(`/view/${task.path}`)}
+                  className="glass-dark p-4 rounded-2xl flex items-center gap-4 border border-white/5 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <div className="w-1.5 h-10 bg-purple-500 rounded-full" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-white font-semibold text-sm truncate">{task.title}</h4>
+                    {task.project && (
+                      <span className="text-[10px] font-bold text-purple-400/60 uppercase tracking-widest">
+                        {task.project.replace(/\[\[|\]\]/g, "")}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              !isFetching && (
+                <div className="text-center py-12 rounded-3xl bg-gray-800/20 border border-dashed border-gray-700">
+                  <div className="text-gray-600 mb-2">
+                    <Sparkles size={32} className="mx-auto opacity-10" />
+                  </div>
+                  <p className="text-gray-500 text-xs text-center">這天沒有待辦任務</p>
+                </div>
+              )
+            )}
+          </AnimatePresence>
+          {isFetching && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="animate-spin text-purple-500/50" size={24} />
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#161616]/80 backdrop-blur-lg border-t border-gray-800 flex items-center justify-around px-4">
+      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#161616]/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-50">
         <button 
-          onClick={() => router.push("/")}
-          className="flex flex-col items-center gap-1 text-purple-500 active:scale-90 transition-transform"
+          className="flex flex-col items-center gap-1 text-blue-500 active:scale-90 transition-transform"
         >
           <ListTodo size={24} />
-          <span className="text-[10px] font-bold">任務</span>
+          <span className="text-[10px] font-bold">今天</span>
+        </button>
+        <button 
+          onClick={() => router.push("/tasks")}
+          className="flex flex-col items-center gap-1 text-gray-500 hover:text-white active:scale-90 transition-transform"
+        >
+          <CalendarIcon size={24} />
+          <span className="text-[10px] font-bold">所有任務</span>
         </button>
         <button 
           onClick={() => router.push("/projects")}
@@ -199,13 +232,6 @@ export default function Dashboard() {
         >
           <LayoutGrid size={24} />
           <span className="text-[10px] font-bold">專案</span>
-        </button>
-        <button 
-          onClick={() => router.push("/setup?force=true")}
-          className="flex flex-col items-center gap-1 text-gray-500 hover:text-white active:scale-90 transition-transform"
-        >
-          <Settings size={24} />
-          <span className="text-[10px] font-bold">設定</span>
         </button>
       </nav>
     </div>

@@ -27,7 +27,7 @@ export class GitHubService {
     }
   }
 
-  // 讀取單一 Markdown 檔案並解析
+  // 讀取單一 Markdown 檔案並解析 (支援 Obsidian 混合格式)
   async readMarkdown(path: string): Promise<ObsidianTask | null> {
     try {
       const { data }: any = await this.octokit.rest.repos.getContent({
@@ -41,23 +41,44 @@ export class GitHubService {
 
       // 使用更健壯的解碼方式
       const content = Buffer.from(data.content, "base64").toString("utf-8");
+      
+      // 解析 YAML Frontmatter
       const { data: frontmatter, content: body } = matter(content);
 
-      // 解析日期：優先從 YAML 讀取，若無則從檔名 (YYYY-MM-DD) 擷取
+      // --- 強化解析器：支援 Obsidian 行內 Metadata (例如: 日期 2026-04-19) ---
       let date = frontmatter.日期 || "";
+      let status = frontmatter.狀態 === true || frontmatter.status === "completed";
+      let project = frontmatter.專案 || "";
+
+      // 如果 YAML 沒解析到，嘗試 Regex 掃描全文
       if (!date) {
-        const dateMatch = data.name.match(/\d{4}-\d{2}-\d{2}/);
-        if (dateMatch) date = dateMatch[0];
+        const dateMatch = content.match(/日期\s+([\d-]+)/);
+        if (dateMatch) date = dateMatch[1];
+        else {
+          const filenameMatch = data.name.match(/\d{4}-\d{2}-\d{2}/);
+          if (filenameMatch) date = filenameMatch[0];
+        }
       }
+
+      if (content.includes("狀態 false")) status = false;
+      if (content.includes("狀態 true")) status = true;
+
+      if (!project) {
+        const projectMatch = content.match(/專案\s+\[\[(.*?)\]\]/);
+        if (projectMatch) project = projectMatch[1];
+      }
+
+      // 清洗專案名稱中的 Wikilinks
+      project = project.replace(/\[\[|\]\]/g, "").split("/").pop() || project;
 
       return {
         id: data.name.replace(".md", ""),
         path,
         title: (frontmatter.title || data.name).replace(".md", ""),
-        project: frontmatter.專案 || "",
-        status: frontmatter.狀態 === true || frontmatter.status === "completed",
-        date: date,
-        content: body,
+        project,
+        status,
+        date,
+        content: body || content, // 如果 body 為空說明沒 YAML，則取全文
         sha: data.sha,
       };
     } catch (error) {
