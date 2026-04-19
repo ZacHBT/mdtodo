@@ -197,7 +197,7 @@ export default function Dashboard() {
           <span className="text-[10px] font-bold">專案</span>
         </button>
         <button 
-          onClick={() => router.push("/setup")}
+          onClick={() => router.push("/setup?force=true")}
           className="flex flex-col items-center gap-1 text-gray-500 hover:text-white active:scale-90 transition-transform"
         >
           <Settings size={24} />

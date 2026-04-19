@@ -21,10 +21,11 @@ function SetupContent() {
     token: config?.token || "",
   });
 
-  // Redirect if already configured
+  // Redirect if already configured, unless forced
   useEffect(() => {
     const importData = searchParams.get("import");
-    if (config && !importData) {
+    const force = searchParams.get("force");
+    if (config && !importData && force !== "true") {
       router.push("/");
     }
   }, [config, router, searchParams]);
